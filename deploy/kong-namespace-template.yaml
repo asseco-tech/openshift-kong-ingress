@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Kong Ingress Controller - installing Namespace with policy
+    tags: controller,kong
+    version: 1.0
+  name: kong-namespace-template
+objects:
+
+
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      openshift.io/description: ${NAMESPACE_DESC}
+      openshift.io/sa.scc.mcs: s0:c13,c7
+      openshift.io/sa.scc.supplemental-groups: 0/10000
+      openshift.io/sa.scc.uid-range: 0/10000
+    name: ${NAMESPACE}
+
+
+parameters:
+- name: NAMESPACE
+  displayName: Kong Namespace
+  description: Kong Installation Namespace
+  required: true
+- name: NAMESPACE_DESC
+  displayName: Kong Namespace Description
+  description: Kong Installation Namespace Description
+  required: true

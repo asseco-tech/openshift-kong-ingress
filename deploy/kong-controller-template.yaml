@@ -1,0 +1,329 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Kong Ingress Controller - microapplication deployment
+    tags: controller,kong,ingress-kong
+    version: "1.0"
+  name: kong-conroller-template
+objects:
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: kong-server-blocks
+    labels:
+      app: ingress-kong
+  data:
+    servers.conf: |
+      # Prometheus metrics server
+      server {
+          server_name kong_prometheus_exporter;
+          listen 0.0.0.0:9542; # can be any other port as well
+          access_log off;
+
+          location /metrics {
+              default_type text/plain;
+              content_by_lua_block {
+                   local prometheus = require "kong.plugins.prometheus.exporter"
+                   prometheus:collect()
+              }
+          }
+
+          location /nginx_status {
+              internal;
+              stub_status;
+          }
+      }
+      # Health check server
+      server {
+          server_name kong_health_check;
+          listen 0.0.0.0:9001; # can be any other port as well
+
+          access_log off;
+          location /health {
+            return 200;
+          }
+      }
+
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: kong-proxy
+    labels:
+      app: ingress-kong
+  spec:
+    externalTrafficPolicy: Local
+    ports:
+    - name: proxy
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: proxy-ssl
+      port: 443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      app: ingress-kong
+    type: LoadBalancer
+
+
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: kong-proxy
+    labels:
+      app: ingress-kong
+  spec:
+    host: ${KONG_PROXY_HTTP_HOST}
+    port:
+      targetPort: proxy
+    to:
+      kind: Service
+      name: kong-proxy
+      weight: 100
+    tls:
+      insecureEdgeTerminationPolicy: Allow
+      termination: edge
+    wildcardPolicy: Subdomain
+
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: kong-admin
+    labels:
+      app: ingress-kong
+  spec:
+    ports:
+    - name: admin
+      port: 80
+      protocol: TCP
+      targetPort: 8001
+    selector:
+      app: ingress-kong
+    type: ClusterIP
+    sessionAffinity: None
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: kong-validation-webhook
+    labels:
+      app: ingress-kong
+  spec:
+    ports:
+    - name: webhook
+      port: 443
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: ingress-kong
+
+
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: ingress-kong
+    labels:
+      app: ingress-kong
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: ingress-kong
+    template:
+      metadata:
+        labels:
+          app: ingress-kong
+          deploymentconfig: ingress-kong
+      spec:
+        containers:
+        - name: proxy
+          env:
+          - name: KONG_DATABASE
+            value: 'off'
+          - name: KONG_NGINX_DAEMON
+            value: 'off'
+          - name: KONG_NGINX_WORKER_PROCESSES
+            value: '1'
+          - name: KONG_NGINX_HTTP_INCLUDE
+            value: /kong/servers.conf
+          - name: KONG_ADMIN_ACCESS_LOG_
+            value: /dev/stdout
+          - name: KONG_ADMIN_ERROR_LOG
+            value: /dev/stderr
+          - name: KONG_ADMIN_LISTEN
+            value: 0.0.0.0:8001, 0.0.0.0:8444 ssl http2
+          - name: KONG_LOG_LEVEL
+            value: info
+          - name: KONG_PROXY_ACCESS_LOG
+            value: /dev/stdout
+          - name: KONG_PROXY_ERROR_LOG
+            value: /dev/stderr
+          - name: KONG_PROXY_LISTEN
+            value: 0.0.0.0:8000, 0.0.0.0:8443 ssl http2
+          - name: KONG_PLUGINS
+            value: 'bundled,myheader,jwt-transformer'
+          - name: KONG_LUA_PACKAGE_PATH
+            value: "/opt/?.lua;;"
+          image: ${KONG_IMAGE_NAME}:${KONG_IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              kong start
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/sh
+                - -c
+                - kong quit
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 9001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8000
+            name: proxy
+            protocol: TCP
+          - containerPort: 8001
+            name: admin
+            protocol: TCP
+          - containerPort: 8443
+            name: proxy-ssl
+            protocol: TCP
+          - containerPort: 8444
+            name: admin-ssl
+            protocol: TCP
+          - containerPort: 9542
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 9001
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 250m
+              memory: 80Mi
+            limits:
+              memory: "${KONG_MEMORY_LIMIT}"
+          volumeMounts:
+          - mountPath: /kong
+            name: kong-server-blocks
+          - mountPath: /opt/kong/plugins/myheader
+            name: plugin-myheader
+        - name: ingress-controller
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          image: ${KONG_CONTROLLER_IMAGE_NAME}:${KONG_CONTROLLER_IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          args:
+          - /kong-ingress-controller
+          - --kong-url=http://localhost:8001
+          - --admin-tls-skip-verify
+          - --publish-service=${NAMESPACE}/kong-proxy
+          - --ingress-class=${INGRESS_CLASS_ID}
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8080
+            name: webhook
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 20Mi
+            limits:
+              memory: 200Mi
+        serviceAccountName: default
+        securityContext:
+          runAsUser: 0
+        restartPolicy: Always
+        resources:
+        volumes:
+        - name: kong-server-blocks
+          configMap:
+            name: kong-server-blocks
+        - name: plugin-myheader
+          configMap:
+            name: plugin-myheader
+
+parameters:
+- name: NAMESPACE
+  displayName: Kong Namespace
+  description: Kong Installation Namespace
+  value: 'kong'
+  required: true
+- name: INGRESS_CLASS_ID
+  displayName: Kong Ingress Class Name
+  description: Kong Ingress Class Name (unique name for the environment)
+  value: 'kong'
+  required: true
+- name: KONG_MEMORY_LIMIT
+  displayName: Kong Memory Limit
+  description: Maximum amount of memory the kong container can use.
+  value: 1Gi
+- name: KONG_IMAGE_NAME
+  displayName: Kong Container Image Name
+  description: 'Name of the kong container image to be used'
+  value: 'docker.io/kong'
+- name: KONG_IMAGE_TAG
+  displayName: Kong Image Tag
+  description: Kong Image Tag (0.10, latest, etc.)
+  value: '1.4'
+- name: KONG_CONTROLLER_IMAGE_NAME
+  displayName: Kong Controller Image Name
+  description: 'Name of the kong Controller image to be used'
+  value: 'docker.io/siriuszg/kong-ingress-controller'
+- name: KONG_CONTROLLER_IMAGE_TAG
+  displayName: Kong Controller Image Tag
+  description: kong Controller image tag (0.10, latest, etc.)
+  value: '0.6.2'
+- name: KONG_PROXY_HTTP_HOST
+  displayName: Kong Proxy External HTTP Host Name
+  description: Kong Proxy External HTTP Host Name
+  value: ''
