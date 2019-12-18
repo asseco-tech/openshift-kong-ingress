@@ -29,8 +29,8 @@ Script `install-admin.sh` require **cluster-admin** role.
 Script `install.sh` require only local project **admin** role.
 
 ## Custom Installing
-You can use `*.yaml` templates (look at deploy folder) to install them
-by custom solution. You just have to keep order below:
+You can use `*.yaml` templates (look at [deploy](deploy) folder) to install them
+by custom solution. You just have to keep order according to the table below:
 
 | Order | Template                     | Required Role | Scope   |
 |-------|------------------------------|---------------|---------|
@@ -51,4 +51,18 @@ oc adm policy add-scc-to-user anyuid -z kong-serviceaccount -n ${project_name}
 ```
 
 ## License
-**openshift-kong-ingress** is published under [Apache License 2.0](LICENSE).
+```
+Copyright 2019 Asseco Poland SA
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
