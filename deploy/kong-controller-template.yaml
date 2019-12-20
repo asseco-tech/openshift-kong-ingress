@@ -88,9 +88,9 @@ objects:
       name: kong-proxy
       weight: 100
     tls:
-      insecureEdgeTerminationPolicy: Allow
+      insecureEdgeTerminationPolicy: ${KONG_PROXY_INSECURE_EDGE}
       termination: edge
-    wildcardPolicy: Subdomain
+    wildcardPolicy: ${KONG_PROXY_WILDCARD_POLICY}
 
 
 - apiVersion: v1
@@ -324,6 +324,14 @@ parameters:
   description: kong Controller image tag (0.10, latest, etc.)
   value: '0.6.2'
 - name: KONG_PROXY_HTTP_HOST
-  displayName: Kong Proxy External HTTP Host Name
-  description: Kong Proxy External HTTP Host Name
-  value: ''
+  displayName: Kong Proxy External HTTP/HTTPS Host Name
+  description: Kong Proxy External HTTP/HTTPS Host Name for Kong Proxy Route (kong_proxy Route configuration)
+  required: true
+- name: KONG_PROXY_INSECURE_EDGE
+  displayName: insecureEdgeTerminationPolicy value for Kong Proxy Route
+  description: insecureEdgeTerminationPolicy value for Kong Proxy Route (kong_proxy Route configuration)
+  value: 'Allow'
+- name: KONG_PROXY_WILDCARD_POLICY
+  displayName: wildcardPolicy value for Kong Proxy Route
+  description: wildcardPolicy value for Kong Proxy Route (kong_proxy Route configuration)
+  value: 'None'

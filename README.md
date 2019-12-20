@@ -15,13 +15,13 @@ OpenShift edition has added some permission resources and converted to OpenShift
 ## Compatiblity
 **openshift-kong-ingress** has tested with:
  - OpenShift 3.11
- - Kong 1.4
+ - Kong 1.4.0
  - Kong Controller 0.6.2
  - Konga 0.14.7
 
  
 ## Automated Installing
-Configuring in:
+Configuration in:
 ```
 configure.env
 ```
