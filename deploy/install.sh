@@ -55,9 +55,14 @@ oc process -f kong-controller-template.yaml \
   -o yaml \
   > yaml.tmp && \
 cat yaml.tmp | oc apply -f -
+if [ $? -ne 0 ]; then return 1; fi
 
 echo "+ Installing KONGA-UI application"
 oc process -f konga-ui-template.yaml \
+  -p KONGA_IMAGE_NAME=${konga_image_name} \
+  -p KONGA_IMAGE_TAG=${konga_image_tag} \
+  -p ADMIN_USER_PASS=${konga_admin_user_pass} \
+  -p KONGA_INSECURE_EDGE=$( ${konga_http_allow} && echo 'Allow' || echo 'None' ) \
   -o yaml \
   > yaml.tmp && \
 cat yaml.tmp | oc apply -f -

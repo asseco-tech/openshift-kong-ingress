@@ -41,7 +41,7 @@ by custom solution. You just have to keep order according to the table below:
 | Order | Template or script           | Required Role | Scope   |
 |-------|------------------------------|---------------|---------|
 | 1     | kong-cluster-template.yaml   | cluster-admin | cluster |
-| 2     | kong-namespace-template.yaml | cluster-admin | cluster |
+| 2     | kong-project-template.yaml   | cluster-admin | cluster |
 | 3     | kong-account-template.yaml   | cluster-admin | project |
 | 4     | [scc-script](#scc-script)    | cluster-admin | project |
 | 5     | kong-controller-template.yaml| local admin   | project |
@@ -52,8 +52,8 @@ Every template contains parameters with some documentation inside.
 #### scc-script
 ```
 project_name=<kong-project>
-oc adm policy add-scc-to-user anyuid -z default -n ${project_name}
 oc adm policy add-scc-to-user anyuid -z kong-serviceaccount -n ${project_name}
+oc adm policy add-scc-to-user anyuid -z default -n ${project_name}
 ```
 
 ## License

@@ -5,15 +5,15 @@ labels:
   group: infrastructure
 metadata:
   annotations:
-    description: Kong Ingress Controller - installing Namespace with policy
+    description: Kong Ingress Controller - installing Project with policy
     tags: controller,kong
-    version: 1.0
-  name: kong-namespace-template
+    version: "1.0"
+  name: kong-project-template
 objects:
 
 
 - apiVersion: v1
-  kind: Namespace
+  kind: Project
   metadata:
     annotations:
       openshift.io/description: ${NAMESPACE_DESC}

@@ -42,7 +42,7 @@ objects:
     port:
       targetPort: http
     tls:
-      insecureEdgeTerminationPolicy: Allow
+      insecureEdgeTerminationPolicy: ${KONGA_INSECURE_EDGE}
       termination: edge
     to:
       kind: Service
@@ -171,3 +171,7 @@ parameters:
   displayName: Administrator User Password for Konga UI
   description: 'Password of the Konga Administrator User'
   value: 'admin123'
+- name: KONGA_INSECURE_EDGE
+  displayName: insecureEdgeTerminationPolicy value for Konga Route
+  description: insecureEdgeTerminationPolicy value for Konga Route (konga-ui Route configuration)
+  value: 'Allow'

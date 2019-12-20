@@ -279,7 +279,7 @@ objects:
               memory: 20Mi
             limits:
               memory: 200Mi
-        serviceAccountName: default
+        serviceAccountName: kong-serviceaccount
         securityContext:
           runAsUser: 0
         restartPolicy: Always

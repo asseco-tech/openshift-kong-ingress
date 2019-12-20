@@ -7,7 +7,7 @@ metadata:
   annotations:
     description: Kong Ingress Controller - roles and policy
     tags: controller,kong
-    version: 1.0
+    version: "1.0"
   name: kong-account-template
 objects:
 
@@ -32,22 +32,6 @@ objects:
   subjects:
   - kind: ServiceAccount
     name: kong-serviceaccount
-    namespace: ${NAMESPACE}
-
-
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    name: kong-ingress-clusterrole-default-binding
-    labels:
-      app: ingress-kong
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: kong-ingress-clusterrole
-  subjects:
-  - kind: ServiceAccount
-    name: default
     namespace: ${NAMESPACE}
 
 
