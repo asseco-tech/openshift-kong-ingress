@@ -19,6 +19,8 @@ function create_configmap()
 
 # active project variable
 project_name="${run_project_name}${environment}"
+project_build=`echo "${build_project_name}${environment}"`
+
 
 # Validating tools
 type oc > /dev/null 2>&1 || { echo >&2 "ERROR: oc program doesn't exist" && return 1; }
@@ -27,6 +29,13 @@ oc whoami > /dev/null 2>&1 || { echo >&2 "ERROR: You must login to OpenShift" &&
 echo "+ Setting active project $project_name ..."
 oc project ${project_name}
 if [ $? -ne 0 ]; then return 1; fi
+
+
+echo "+++ Adding system:image-puller role"
+oc adm policy add-role-to-group system:image-puller system:serviceaccounts:${project_name} \
+            --namespace=${project_build} \
+            --rolebinding-name=${project_name}:image-puller;
+
 
 # Installing Plugin Configmaps
 if [ -d "./plugins" ]; then

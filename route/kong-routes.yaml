@@ -1,0 +1,22 @@
+kong:
+  jwt-provider:
+    key-claim-name: aud
+    key-claim-value: app
+    rsa-public-key: "-----BEGIN PUBLIC KEY-----\n<RSA CERTIFICATE>\n-----END PUBLIC KEY-----"
+
+  routes:
+    - name: rule-1
+      route-path: /endpoint/v1/docs/books
+      route-plugins: route-plugin-jwt
+      service-name: echo
+      service-port: 8080
+      rewrite-path: /v1/docs/books
+      external-service-name: echo.test-dev.svc
+
+    - name: rule-2
+      route-path: /endpoint/v1/docs/users
+      route-plugins: route-plugin-jwt
+      service-name: echo
+      service-port: 8080
+      rewrite-path: v1/docs/users
+      external-service-name: echo.test-dev.svc

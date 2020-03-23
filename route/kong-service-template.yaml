@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: External Service Template
+    tags: controller,kong,route
+    version: "1.0"
+  name: kong-service-template
+objects:
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${service_name}
+    labels:
+      kong-route: ${route_name}
+  spec:
+    externalName: ${external_service_name}
+    ports:
+      - name: http
+        port: ${{service_port}}
+        protocol: TCP
+        targetPort: ${{service_port}}
+    sessionAffinity: None
+    type: ExternalName
+  status:
+    loadBalancer: {}
+
+parameters:
+- name: route_name
+  displayName: Route Name
+  required: true
+- name: external_service_name
+  displayName: External Service Name
+  required: true
+- name: service_name
+  displayName: Service Name
+  required: true
+- name: service_port
+  displayName: Service Port
+  value: "8080"
+  required: true

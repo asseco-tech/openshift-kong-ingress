@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Plugins Template for Kong
+    tags: controller,kong,plugin
+    version: "1.0"
+  name: kong-plugins-template
+objects:
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongConsumer
+  metadata:
+    name: consumer-jwt
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  username: consumer-jwt
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongCredential
+  metadata:
+    name: credential-jwt
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  consumerRef: consumer-jwt
+  type: jwt
+  config:
+    key: ${key_claim_value}
+    algorithm: RS256
+    rsa_public_key: ${{rsa_public_key}}
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: route-plugin-jwt
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  config:
+    key_claim_name: ${key_claim_name}
+    header_names:
+      - Authorization
+  plugin: jwt
+
+
+parameters:
+- name: ingress_class
+  displayName: Ingress Class
+  value: "kong"
+  required: true
+- name: key_claim_name
+  displayName: JWT Key Claim Name
+  required: true
+- name: key_claim_value
+  displayName: JWT Key Claim Value
+  required: true
+- name: rsa_public_key
+  displayName: JWT RSA Public Key
+  required: true

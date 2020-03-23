@@ -150,7 +150,9 @@ objects:
           - name: KONG_NGINX_DAEMON
             value: 'off'
           - name: KONG_NGINX_WORKER_PROCESSES
-            value: '1'
+            value: '3'
+          - name: KONG_PROXY_CACHE
+            value: 'off'
           - name: KONG_NGINX_HTTP_INCLUDE
             value: /kong/servers.conf
           - name: KONG_ADMIN_ACCESS_LOG_
@@ -166,7 +168,7 @@ objects:
           - name: KONG_PROXY_ERROR_LOG
             value: /dev/stderr
           - name: KONG_PROXY_LISTEN
-            value: 0.0.0.0:8000, 0.0.0.0:8443 ssl http2
+            value: 0.0.0.0:8000, 0.0.0.0:8443 ssl
           - name: KONG_PLUGINS
             value: 'bundled,myheader,jwt-transformer'
           - name: KONG_LUA_PACKAGE_PATH

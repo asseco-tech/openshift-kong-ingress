@@ -23,6 +23,7 @@ oc process -f kong-project-template.yaml \
   -p NAMESPACE_DESC="${run_project_desc}" \
   -o yaml \
   > yaml.tmp && \
+# oddzielny projekt nie jest zakladany
 cat yaml.tmp | oc apply -f -;
 # TODO: -p NAMESPACE_DISPLAY="$( echo "${run_project_name} ${environment:1}" | tr a-z A-Z )" \
 if [ $? -ne 0 ]; then return 1; fi

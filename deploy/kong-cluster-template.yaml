@@ -343,6 +343,7 @@ objects:
     verbs:
     - list
     - watch
+    - get
   - apiGroups:
     - ""
     resources:
