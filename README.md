@@ -15,8 +15,8 @@ OpenShift edition has added some permission resources and converted to OpenShift
 ## Compatiblity
 **openshift-kong-ingress** has tested with:
  - OpenShift 3.11
- - Kong 1.4.0
- - Kong Controller 0.6.2
+ - Kong 2.0.2
+ - Kong Controller 0.7.1
  - Konga 0.14.7
 
  
@@ -58,7 +58,7 @@ oc adm policy add-scc-to-user anyuid -z default -n ${project_name}
 
 ## License
 ```
-Copyright 2019 Asseco Poland SA
+Copyright 2019-2020 Asseco Poland SA
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

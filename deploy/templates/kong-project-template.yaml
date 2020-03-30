@@ -17,6 +17,7 @@ objects:
   metadata:
     annotations:
       openshift.io/description: ${NAMESPACE_DESC}
+      openshift.io/display-name: ${NAMESPACE_DISPLAY}
       openshift.io/sa.scc.mcs: s0:c13,c7
       openshift.io/sa.scc.supplemental-groups: 0/10000
       openshift.io/sa.scc.uid-range: 0/10000
@@ -28,7 +29,13 @@ parameters:
   displayName: Kong Namespace
   description: Kong Installation Namespace
   required: true
+- name: NAMESPACE_DISPLAY
+  displayName: Kong Namespace
+  description: Kong Installation Namespace
+  required: false
+  value: ""
 - name: NAMESPACE_DESC
   displayName: Kong Namespace Description
   description: Kong Installation Namespace Description
-  required: true
+  required: false
+  value: ""

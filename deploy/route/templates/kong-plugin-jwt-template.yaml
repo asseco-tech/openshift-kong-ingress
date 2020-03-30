@@ -8,7 +8,7 @@ metadata:
     description: Plugins Template for Kong
     tags: controller,kong,plugin
     version: "1.0"
-  name: kong-plugins-template
+  name: kong-plugin-jwt
 objects:
 
 - apiVersion: configuration.konghq.com/v1
@@ -37,7 +37,7 @@ objects:
 - apiVersion: configuration.konghq.com/v1
   kind: KongPlugin
   metadata:
-    name: route-plugin-jwt
+    name: plugin-common-jwt
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
   config:
@@ -45,7 +45,6 @@ objects:
     header_names:
       - Authorization
   plugin: jwt
-
 
 parameters:
 - name: ingress_class

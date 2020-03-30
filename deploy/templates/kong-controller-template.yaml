@@ -227,7 +227,7 @@ objects:
               cpu: 250m
               memory: 80Mi
             limits:
-              memory: "${KONG_MEMORY_LIMIT}"
+              memory: "${KONG_PROXY_MEMORY_LIMIT}"
           volumeMounts:
           - mountPath: /kong
             name: kong-server-blocks
@@ -280,7 +280,7 @@ objects:
               cpu: 100m
               memory: 20Mi
             limits:
-              memory: 200Mi
+              memory: ${KONG_INGRESS_MEMORY_LIMIT}
         serviceAccountName: kong-serviceaccount
         securityContext:
           runAsUser: 0
@@ -305,10 +305,14 @@ parameters:
   description: Kong Ingress Class Name (unique name for the environment)
   value: 'kong'
   required: true
-- name: KONG_MEMORY_LIMIT
-  displayName: Kong Memory Limit
-  description: Maximum amount of memory the kong container can use.
-  value: 1Gi
+- name: KONG_PROXY_MEMORY_LIMIT
+  displayName: Kong Memory Limit (proxy container)
+  description: Maximum amount of memory the kong container can use (proxy container)
+  value: 500Mi
+- name: KONG_INGRESS_MEMORY_LIMIT
+  displayName: Kong Memory Limit (ingress container)
+  description: Maximum amount of memory the kong container can use (ingress container)
+  value: 200Mi
 - name: KONG_IMAGE_NAME
   displayName: Kong Container Image Name
   description: 'Name of the kong container image to be used'

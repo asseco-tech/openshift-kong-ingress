@@ -22,12 +22,13 @@ objects:
       kubernetes.io/ingress.class: ${ingress_class}
   route:
     strip_path: false
+    regex_priority: ${{route_priority}}
 
 
 - apiVersion: configuration.konghq.com/v1
   kind: KongPlugin
   metadata:
-    name: route-plugin-${route_name}
+    name: plugin-route-${route_name}
     labels:
       kong-route: ${route_name}
     annotations:
@@ -35,12 +36,6 @@ objects:
   config:
     replace:
       uri: "${rewrite_path}"
-    remove:
-      headers:
-      - Access-Control-Allow-Credentials
-      - Access-Control-Allow-Headers
-      - Access-Control-Allow-Origin
-      - Access-Control-Max-Age
   plugin: request-transformer
 
 
@@ -53,7 +48,7 @@ objects:
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
       configuration.konghq.com: "route-${route_name}"
-      plugins.konghq.com: "route-plugin-${route_name}${route_plugins}"
+      plugins.konghq.com: "plugin-route-${route_name}${route_plugins}"
   spec:
     rules:
     - http:
@@ -75,6 +70,10 @@ parameters:
 - name: route_path
   displayName: Route Path
   required: true
+- name: route_priority
+  displayName: Route Priority
+  required: true
+  value: "1"
 - name: route_plugins
   displayName: Route Plugins
   descrpition: Jeśli podano nazwy pluginów, to muszą się zaczynać od przecinka

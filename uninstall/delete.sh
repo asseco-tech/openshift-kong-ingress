@@ -9,6 +9,5 @@ project_build=`echo "${build_project_name}${environment}"`
 
 oc delete -f kong-account-deletes.yaml -n ${project_name}
 oc delete project ${project_name}
-oc delete -f kong-cluster-deletes.yaml
 
 oc delete bc ${build_name} -n ${project_build}

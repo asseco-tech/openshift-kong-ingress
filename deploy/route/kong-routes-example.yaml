@@ -1,0 +1,44 @@
+kong:
+  # parametry dla plugin-common-jwt
+  jwt-provider:
+    key-claim-name: aud
+    key-claim-value: ap-ezla
+    rsa-public-key: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhBKBqmvuKuDHJyXmaA0CpAEKOsnQktFaYwW9eG8ReuT+1xxmNitux/aqVlcWe2pvEC7KywsWOuUa3CZx2NlSKjaBi4QulAD+xxf2picRlSD3w/R0ndysG1RmA9mYiEpzPUAzO90ZdLIa8WXYNinDWcdd1jlVWVC7xSWkLVIHo/RA4SCnA5jGFzliNBeY8/3qOb8jnVqeVsIxEWWK0juTsetarCSfWhoiB/mYiseMgocNA+lfDBp28CXxXoSdDHwonhohyCRmtvfUm0ZemTg0b3bynmnc7bbBP+pkEJVcc/90esymFH9g7/pmyJ2ECXP3CRI/5cA96LY/fzDmstnPUwIDAQAB\n-----END PUBLIC KEY-----"
+
+  # parametry dla plugin-common-throttling
+  throttling:
+    request-per-second: 100
+    request-per-minute: 3000
+    limit-by: ip
+
+  # definicje routes dla gateway
+  routes:
+    - name: regula-root
+      route-path: /(.*)
+      priority: 1
+      route-plugins: plugin-common-throttling
+      service-name: cov-wnioski
+      service-port: 8080
+      rewrite-path: /\$(uri_captures[1])
+      external-service-name: cov-wnioski.cov-wnioski-dev.svc
+      request-size-limit: 100
+
+    - name: regula-echo-01
+      route-path: /test/(.*)
+      priority: 10
+      route-plugins: plugin-common-throttling, plugin-common-cors
+      service-name: echo
+      service-port: 8080
+      rewrite-path: /test/\$(uri_captures[1])
+      external-service-name: echo.pue-test-dev.svc
+      request-size-limit: 200
+
+    - name: regula-echo-02
+      route-path: /kreator/v1/profile/(.*)/pobierzKontekstyProfilu
+      priority: 10
+      route-plugins: plugin-common-throttling, plugin-common-jwt
+      service-name: echo
+      service-port: 8080
+      rewrite-path: /zla/v1/profile/\$(uri_captures[1])/pobierzKontekstyProfilu
+      external-service-name: echo.pue-test-dev.svc
+      request-size-limit: null
