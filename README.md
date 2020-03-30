@@ -28,14 +28,15 @@ configure.env
 Running scripts:
 ```sh
 cd deploy
-    . install-admin.sh
-    . install.sh
+    . install-cluster.sh
+    . install-project.sh
+    . install-app.sh
 ```  
-Script `install-admin.sh` requires **cluster-admin** role.   
-Script `install.sh` requires only local project **admin** role.
+Scripts `install-cluster.sh` and  `install-project.sh` require **cluster-admin** role.   
+Script `install-app.sh` requires only local project **admin** role.
 
 ## Custom Installing
-You can use `*.yaml` templates (look at [deploy](deploy) folder) to install them
+You can use `*.yaml` templates (look at [templates](deploy/templates) folder) to install them
 by custom solution. You just have to keep order according to the table below:
 
 | Order | Template or script           | Required Role | Scope   |
@@ -53,7 +54,6 @@ Every template contains parameters with some documentation inside.
 ```
 project_name=<kong-project>
 oc adm policy add-scc-to-user anyuid -z kong-serviceaccount -n ${project_name}
-oc adm policy add-scc-to-user anyuid -z default -n ${project_name}
 ```
 
 ## License
