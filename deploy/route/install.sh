@@ -118,7 +118,7 @@ do
     let i++
 done
 
-[ -f kong-dsig-external.yaml ] \
-    && oc $param_mode -f kong-dsig-external.yaml
+[ -f kong-external-services.yaml ] \
+    && oc $param_mode -f kong-external-services.yaml
 
 cd -
