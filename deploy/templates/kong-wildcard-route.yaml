@@ -1,0 +1,18 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kong-proxy-wildcard
+  labels:
+    app: ingress-kong
+spec:
+  host: 'api.kong-proxy.cloudapps.cp.pus.corp'
+  port:
+    targetPort: proxy
+  to:
+    kind: Service
+    name: kong-proxy
+    weight: 100
+  tls:
+    insecureEdgeTerminationPolicy: Allow
+    termination: edge
+  wildcardPolicy: Subdomain

@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Plugins Template for Kong
+    tags: controller,kong,plugin
+    version: "1.0"
+  name: kong-plugins-template
+objects:
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-cors
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  config:
+    origins:
+    - "*"
+    headers:
+    - Accept
+    - Accept-Version
+    - Authorization
+    - Content-Length
+    - Content-MD5
+    - Content-Type
+    - Date
+    - X-Auth-Token
+    credentials: true
+    max_age: 3600
+  plugin: cors
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-throttling
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  config:
+    second: ${{request_per_second}}
+    minute: ${{request_per_minute}}
+    limit_by: ${rate_limit_by}
+    policy: local
+    hide_client_headers: true
+  plugin: rate-limiting
+
+
+parameters:
+- name: ingress_class
+  displayName: Ingress Class
+  value: "kong"
+  required: true
+- name: request_per_second
+  displayName: number of one client requests per second
+  value: "100"
+  required: true
+- name: request_per_minute
+  displayName: number of one client requests per minute
+  value: "2000"
+  required: true
+- name: rate_limit_by
+  displayName: The entity that will be used when aggregating the limits
+  value: "ip"
+  required: true

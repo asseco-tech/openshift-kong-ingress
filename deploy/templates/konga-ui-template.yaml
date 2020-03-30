@@ -1,0 +1,177 @@
+# Based on: https://github.com/pantsel/konga/blob/master/
+# Required: oc adm policy add-scc-to-user anyuid -z default
+
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Konga GUI for Kong - microapplication deployment
+    tags: controller,konga-ui
+    version: "1.0"
+  name: konga-ui-template
+objects:
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: konga-ui
+    labels:
+      app: konga-ui
+  spec:
+    ports:
+      - name: http
+        port: 8080
+        protocol: TCP
+        targetPort: 1337
+    selector:
+      deploymentconfig: konga-ui
+    sessionAffinity: None
+  type: ClusterIP
+
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: konga-ui
+    labels:
+      app: konga-ui
+  spec:
+    port:
+      targetPort: http
+    tls:
+      insecureEdgeTerminationPolicy: ${KONGA_INSECURE_EDGE}
+      termination: edge
+    to:
+      kind: Service
+      name: konga-ui
+      weight: 100
+
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+   name: konga-ui-data
+  spec:
+   accessModes:
+    - ReadWriteOnce
+   resources:
+    requests:
+     storage: 10Mi
+
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: konga-ui-config
+    labels:
+      app: konga-ui
+  data:
+    kong_node.data: |
+      module.exports = [
+        {
+            "name": "kong-admin",
+            "type": "key_auth",
+            "kong_admin_url": "http://kong-admin",
+            "kong_api_key": "",
+            "health_checks": true
+        }
+      ]
+    userdb.data: |
+      module.exports = [
+        {
+            "username": "${ADMIN_USER_NAME}",
+            "password": "${ADMIN_USER_PASS}",
+            "email": "admin@some.domain",
+            "firstName": "Administrator",
+            "lastName": "User",
+            "admin": true,
+            "active" : true
+        }
+      ]
+
+
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: konga-ui
+    labels:
+      app: konga-ui
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: konga-ui
+    template:
+      metadata:
+        labels:
+          app: konga-ui
+          deploymentconfig: konga-ui
+      spec:
+        containers:
+        - name: konga-ui
+          env:
+          - name: NODE_ENV
+            value: development
+          - name: KONGA_LOG_LEVEL
+            value: info
+          - name: KONGA_SEED_KONG_NODE_DATA_SOURCE_FILE
+            value: '/config/kong_node.data'
+          - name: KONGA_SEED_USER_DATA_SOURCE_FILE
+            value: '/config/userdb.data'
+          image: '${KONGA_IMAGE_NAME}:${KONGA_IMAGE_TAG}'
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 1337
+            protocol: TCP
+            name: http
+          livenessProbe:
+            tcpSocket:
+              port: 1337
+              initialDelaySeconds: 30
+              periodSeconds: 20
+              successThreshold: 1
+              timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              memory: 400Mi
+          volumeMounts:
+          - name: konga-ui-config
+            mountPath: /config
+          - name: konga-data
+            mountPath: /app/kongadata
+        restartPolicy: Always
+        resources:
+        volumes:
+        - name: konga-data
+          persistentVolumeClaim:
+            claimName: konga-ui-data
+        - name: konga-ui-config
+          configMap:
+            name: konga-ui-config
+
+parameters:
+- name: KONGA_IMAGE_NAME
+  displayName: Konga Container Image Name
+  description: 'Name of the Konga container image to be used'
+  value: 'docker.io/pantsel/konga'
+- name: KONGA_IMAGE_TAG
+  displayName: Konga Image Tag
+  description: Konga Image Tag (0.10, latest, etc.)
+  value: '0.14.7'
+- name: ADMIN_USER_NAME
+  displayName: Administrator User Name for Konga UI
+  description: 'Name of the Konga Administrator User'
+  value: 'admin'
+- name: ADMIN_USER_PASS
+  displayName: Administrator User Password for Konga UI
+  description: 'Password of the Konga Administrator User'
+  value: 'admin123'
+- name: KONGA_INSECURE_EDGE
+  displayName: insecureEdgeTerminationPolicy value for Konga Route
+  description: insecureEdgeTerminationPolicy value for Konga Route (konga-ui Route configuration)
+  value: 'Allow'

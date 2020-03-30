@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Plugins Template for Kong
+    tags: controller,kong,plugin
+    version: "1.0"
+  name: kong-plugin-size-limit
+objects:
+
+# Kong odpowiada HTTP 413 lub HTTP 417 w przypadku przekroczenia limitu.
+# Plik JPG w rozmiarze 177KB ma content-length=76834
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-size-limit-${route_name}
+    labels:
+      kong-route: ${route_name}
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  config:
+    allowed_payload_size: ${{request_size}}
+    size_unit: kilobytes
+  plugin: request-size-limiting
+
+
+parameters:
+- name: ingress_class
+  displayName: Ingress Class
+  value: "kong"
+  required: true
+- name: route_name
+  displayName: Route Name
+  required: true
+- name: request_size
+  displayName: Request Size Limit in kilobytes
+  required: true
