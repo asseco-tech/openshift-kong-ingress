@@ -4,11 +4,11 @@ labels:
   version: "1.0"
   group: infrastructure
 metadata:
+  name: kong-plugins-template
   annotations:
     description: Plugins Template for Kong
     tags: controller,kong,plugin
     version: "1.0"
-  name: kong-plugins-template
 objects:
 
 
@@ -18,21 +18,41 @@ objects:
     name: plugin-common-cors
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
   config:
     origins:
     - "*"
     headers:
+    - "*"
     - Accept
     - Accept-Version
     - Authorization
     - Content-Length
     - Content-MD5
     - Content-Type
+    - Content-Language
     - Date
     - X-Auth-Token
+    - X-Requested-With
+    - X-Correlation-Id
     credentials: true
     max_age: 3600
   plugin: cors
+
+
+# plugin only for debug
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-trace
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
+  config:
+    path: /tmp/kong-trace.log
+  plugin: file-log
 
 
 - apiVersion: configuration.konghq.com/v1
@@ -41,6 +61,8 @@ objects:
     name: plugin-common-throttling
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
   config:
     second: ${{request_per_second}}
     minute: ${{request_per_minute}}

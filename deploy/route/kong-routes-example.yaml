@@ -19,8 +19,9 @@ kong:
       route-plugins: plugin-common-throttling
       service-name: cov-wnioski
       service-port: 8080
+      service-protocol: http
       rewrite-path: /\$(uri_captures[1])
-      external-service-name: cov-wnioski.cov-wnioski-dev.svc
+      external-service-name: cov-wnioski.cov-wnioski${environment}.svc
       request-size-limit: 100
 
     - name: regula-echo-01
@@ -29,16 +30,29 @@ kong:
       route-plugins: plugin-common-throttling, plugin-common-cors
       service-name: echo
       service-port: 8080
+      service-protocol: http
       rewrite-path: /test/\$(uri_captures[1])
-      external-service-name: echo.pue-test-dev.svc
+      external-service-name: echo.pue-test${environment}.svc
       request-size-limit: 200
 
     - name: regula-echo-02
-      route-path: /kreator/v1/profile/(.*)/pobierzKontekstyProfilu
+      route-path: /test2/(.*)
       priority: 10
+      route-plugins: plugin-common-throttling, plugin-common-cors
+      service-name: echo
+      service-port: 8080
+      service-protocol: http
+      rewrite-path: /test2/
+      external-service-name: echo.pue-test${environment}.svc
+      request-size-limit: 200
+
+    - name: regula-echo-03
+      route-path: /kreator/v1/profile/(.*)/pobierzKontekstyProfilu
+      priority: 11
       route-plugins: plugin-common-throttling, plugin-common-jwt
       service-name: echo
       service-port: 8080
+      service-protocol: http
       rewrite-path: /zla/v1/profile/\$(uri_captures[1])/pobierzKontekstyProfilu
-      external-service-name: echo.pue-test-dev.svc
+      external-service-name: echo.pue-test${environment}.svc
       request-size-limit: null

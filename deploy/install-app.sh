@@ -2,6 +2,7 @@
 
 # Reading configuration
 . ../configure.env
+. ../deploy.env
 
 # function: create_configmap
 function create_configmap()
@@ -19,7 +20,7 @@ function create_configmap()
 
 # active project variable
 project_name="${run_project_name}${environment}"
-project_build=`echo "${build_project_name}${environment}"`
+project_build="${build_project_name}${environment}"
 
 
 # Validating tools
@@ -31,19 +32,6 @@ oc project ${project_name}
 if [ $? -ne 0 ]; then return 1; fi
 
 
-# Installing Plugin Configmaps
-if [ -d "./plugins" ]; then
-    echo "+ Installing Plugin Configmaps"
-    for folder in $(ls ./plugins 2> /dev/null); do
-        plugin_name=$(basename $folder)
-        if [ -d "./plugins/${plugin_name}/plugin" ]; then
-            create_configmap "${plugin_name}" "./plugins/${plugin_name}/plugin/*.lua"
-        else
-            create_configmap "${plugin_name}" "./plugins/${plugin_name}/*.lua"
-        fi
-    done;
-fi
-
 echo "+ Installing INGRESS-KONG application"
 oc process -f templates/kong-controller-template.yaml \
   -p NAMESPACE=${project_name} \
@@ -51,7 +39,8 @@ oc process -f templates/kong-controller-template.yaml \
   -p KONG_PROXY_HTTP_HOST=${kong_proxy_host} \
   -p KONG_PROXY_INSECURE_EDGE=$( ${kong_proxy_http_allow} && echo 'Allow' || echo 'None' ) \
   -p KONG_PROXY_WILDCARD_POLICY=$( ${kong_proxy_subdomain_allow} && echo 'Subdomain' || echo 'None' ) \
-  -p KONG_IMAGE_NAME=${kong_image_path} \
+  -p IMAGE_NAMESPACE=${project_build} \
+  -p KONG_IMAGE_NAME=${custom_kong_image_name} \
   -p KONG_IMAGE_TAG=${kong_image_tag} \
   -p KONG_CONTROLLER_IMAGE_NAME=${kong_controller_image_name} \
   -p KONG_CONTROLLER_IMAGE_TAG=${kong_controller_image_tag} \

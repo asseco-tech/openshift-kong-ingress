@@ -14,13 +14,15 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
+    annotations:
+      configuration.konghq.com/protocol: ${service_protocol}
     name: ${service_name}
     labels:
       kong-route: ${route_name}
   spec:
     externalName: ${external_service_name}
     ports:
-      - name: http
+      - name: ${service_protocol}
         port: ${{service_port}}
         protocol: TCP
         targetPort: ${{service_port}}
@@ -42,4 +44,8 @@ parameters:
 - name: service_port
   displayName: Service Port
   value: "8080"
+  required: true
+- name: service_protocol
+  displayName: Service Protocol
+  value: "http"
   required: true

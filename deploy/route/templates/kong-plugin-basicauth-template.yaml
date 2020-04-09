@@ -4,7 +4,7 @@ labels:
   version: "1.0"
   group: infrastructure
 metadata:
-  name: kong-plugin-jwt
+  name: kong-plugin-basicauth
   annotations:
     description: Plugins Template for Kong
     tags: controller,kong,plugin
@@ -14,58 +14,47 @@ objects:
 - apiVersion: configuration.konghq.com/v1
   kind: KongConsumer
   metadata:
-    name: consumer-jwt
+    name: consumer-basicauth
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
     labels:
       kong-common: true
-  username: consumer-jwt
-
+  username: consumer-basicauth
 
 - apiVersion: configuration.konghq.com/v1
   kind: KongCredential
   metadata:
-    name: credential-jwt
+    name: credential-basicauth
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
     labels:
       kong-common: true
-  consumerRef: consumer-jwt
-  type: jwt
+  consumerRef: consumer-basicauth
+  type: basic-auth
   config:
-    key: ${key_claim_value}
-    algorithm: RS256
-    rsa_public_key: "-----BEGIN PUBLIC KEY-----\n${rsa_public_key}\n-----END PUBLIC KEY-----"
-
+    username: ${username}
+    password: ${password}
 
 - apiVersion: configuration.konghq.com/v1
   kind: KongPlugin
   metadata:
-    name: plugin-common-jwt
+    name: plugin-common-basicauth
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
     labels:
       kong-common: true
   config:
-    key_claim_name: ${key_claim_name}
-    header_names:
-      - Authorization
-    uri_param_names:
-      - jwt
-      - access_token
-  plugin: jwt
+    hide_credentials: true
+  plugin: basic-auth
 
 parameters:
 - name: ingress_class
   displayName: Ingress Class
   value: "kong"
   required: true
-- name: key_claim_name
-  displayName: JWT Key Claim Name
+- name: username
+  displayName: Username
   required: true
-- name: key_claim_value
-  displayName: JWT Key Claim Value
-  required: true
-- name: rsa_public_key
-  displayName: JWT RSA Public Key
+- name: password
+  displayName: Password
   required: true

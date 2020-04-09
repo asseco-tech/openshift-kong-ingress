@@ -2,6 +2,7 @@
 
 # Reading configuration
 . ../configure.env
+. ../deploy.env
 
 # active project variable
 project_name="${run_project_name}${environment}"
