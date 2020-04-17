@@ -33,17 +33,17 @@ if [ $? -ne 0 ]; then return 1; fi
 
 
 echo "+ Installing INGRESS-KONG application"
-oc process -f templates/kong-controller-template.yaml \
+oc process -f templates/kong-deployment-template.yaml \
   -p NAMESPACE=${project_name} \
   -p INGRESS_CLASS_ID=${kong_ingress_class} \
   -p KONG_PROXY_HTTP_HOST=${kong_proxy_host} \
-  -p KONG_PROXY_INSECURE_EDGE=$( ${kong_proxy_http_allow} && echo 'Allow' || echo 'None' ) \
+  -p KONG_PROXY_INSECURE_EDGE=$( ${kong_proxy_http_allow} && echo 'Allow' || echo 'Redirect' ) \
   -p KONG_PROXY_WILDCARD_POLICY=$( ${kong_proxy_subdomain_allow} && echo 'Subdomain' || echo 'None' ) \
   -p IMAGE_NAMESPACE=${project_build} \
   -p KONG_IMAGE_NAME=${custom_kong_image_name} \
   -p KONG_IMAGE_TAG=${kong_image_tag} \
-  -p KONG_CONTROLLER_IMAGE_NAME=${kong_controller_image_name} \
-  -p KONG_CONTROLLER_IMAGE_TAG=${kong_controller_image_tag} \
+  -p KONG_CONTROLLER_IMAGE_NAME=${custom_controller_image_name} \
+  -p KONG_CONTROLLER_IMAGE_TAG=${controller_image_tag} \
   -p KONG_PROXY_MEMORY_LIMIT=${kong_proxy_memory_limit} \
   -o yaml \
   > yaml.tmp && \

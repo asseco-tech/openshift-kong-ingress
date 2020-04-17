@@ -147,6 +147,15 @@ objects:
           kind: ImageStreamTag
           name: "${KONG_IMAGE_NAME}:${KONG_IMAGE_TAG}"
           namespace: "${IMAGE_NAMESPACE}"
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - ingress-controller
+        from:
+          kind: ImageStreamTag
+          name: "${KONG_CONTROLLER_IMAGE_NAME}:${KONG_CONTROLLER_IMAGE_TAG}"
+          namespace: "${IMAGE_NAMESPACE}"
     template:
       metadata:
         labels:
@@ -192,6 +201,12 @@ objects:
             value: /dev/stderr
           - name: KONG_PROXY_LISTEN
             value: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+          - name: KONG_REAL_IP_HEADER
+            value: 'X-Forwarded-For'
+          - name: KONG_REAL_IP_RECURSIVE
+            value: 'on'
+          - name: KONG_TRUSTED_IPS
+            value: '0.0.0.0/0,::/0'
           image: ${KONG_IMAGE_NAME}:${KONG_IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           command:
@@ -223,23 +238,23 @@ objects:
             name: metrics
             protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /health
-              port: 9001
-              scheme: HTTP
-            initialDelaySeconds: 20
-            failureThreshold: 3
-            periodSeconds: 10
-            successThreshold: 1
+            exec:
+              command:
+                - 'sh'
+                - '-c'
+                - '/opt/kong/liveness_probe.sh 9001 /health 8000 /health'
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 2
             timeoutSeconds: 1
           readinessProbe:
             httpGet:
               path: /health
               port: 9001
               scheme: HTTP
-            failureThreshold: 3
-            periodSeconds: 5
-            successThreshold: 1
+            initialDelaySeconds: 5
+            periodSeconds: 12
+            failureThreshold: 5
             timeoutSeconds: 1
           resources:
             requests:
@@ -275,22 +290,23 @@ objects:
             name: webhook
             protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 10254
-              scheme: HTTP
-            failureThreshold: 3
+            exec:
+              command:
+                - 'sh'
+                - '-c'
+                - '/opt/kong/liveness_probe.sh 10254 /healthz 8000 /health'
+            initialDelaySeconds: 30
             periodSeconds: 30
-            successThreshold: 1
+            failureThreshold: 2
             timeoutSeconds: 1
           readinessProbe:
             httpGet:
               path: /healthz
               port: 10254
               scheme: HTTP
-            failureThreshold: 3
-            periodSeconds: 10
-            successThreshold: 1
+            initialDelaySeconds: 5
+            periodSeconds: 12
+            failureThreshold: 5
             timeoutSeconds: 1
           resources:
             requests:

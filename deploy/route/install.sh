@@ -8,8 +8,14 @@ source scripts/yaml.sh
 
 # cli param
 param_mode=${1:-apply}
+param_config_yaml=${2:-kong-routes.yaml}
 if [[ ! "${param_mode}" =~ ^(apply|create|delete)$ ]]; then
-    echo "Usage: ./install.sh [apply|create|delete]"
+    echo "Usage: ./install.sh [apply|create|delete] [<file.yaml>]"
+    exit 1
+fi
+if [ ! -f ${param_config_yaml} ]; then
+    echo "Usage: ./install.sh [apply|create|delete] [<file.yaml>]"
+    echo >&2 "ERROR: file \"${param_config_yaml}\" doesn't exist"
     exit 1
 fi
 
@@ -19,7 +25,8 @@ type oc > /dev/null 2>&1 || { echo >&2 "ERROR: oc program doesn't exist" && exit
 oc whoami > /dev/null 2>&1 || { echo >&2 "ERROR: You must login to OpenShift" && exit 1; }
 
 # Execute parsing yaml
-create_variables ./kong-routes.yaml
+echo "+ Routes Config File: ${param_config_yaml}"
+create_variables ${param_config_yaml}
 
 # openshift project
 echo "+ Setting active project $route_project_name ..."

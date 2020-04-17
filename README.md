@@ -1,7 +1,19 @@
 # openshift-kong-ingress
-OpenShift Deployment for Kong API Gateway and Konga GUI.
+#### Version: 1.1.1
 
-Repository address: https://github.com/asseco-tech/openshift-kong-ingress/
+OpenShift Deployment Scripts for Kong API Gateway and Konga GUI.
+
+ - **openshift-kong-ingress** repository: https://github.com/asseco-tech/openshift-kong-ingress/  
+ - Kong repository: https://github.com/Kong/kong
+ - Konga repository: https://github.com/pantsel/konga
+
+## Compatiblity
+**openshift-kong-ingress** has tested with:
+ - OpenShift 3.11
+ - Kong 2.0.2
+ - Kong Controller 0.7.1
+ - Konga 0.14.7
+
 
 ## Content
 It is OpenShift edition of [Kong for Kubernetes](https://github.com/Kong/kubernetes-ingress-controller) scripts and 
@@ -12,13 +24,6 @@ Konga is nice GUI dashboard for Kong.
 OpenShift edition has added some permission resources and converted to OpenShift specific resources.
 
 
-## Compatiblity
-**openshift-kong-ingress** has tested with:
- - OpenShift 3.11
- - Kong 2.0.2
- - Kong Controller 0.7.1
- - Konga 0.14.7
-
  
 ## Automated Installing
 Configuration in:
@@ -26,7 +31,9 @@ Configuration in:
 configure.env
 ```
 Running scripts:
-```sh
+```bash
+cd build
+    . install.sh
 cd deploy
     . install-cluster.sh
     . install-project.sh

@@ -47,9 +47,11 @@ objects:
     labels:
       kong-common: true
   config:
-    key_claim_name: ${key_claim_name}
+    claims_to_verify:
+      - exp
     header_names:
       - Authorization
+    key_claim_name: ${key_claim_name}
     uri_param_names:
       - jwt
       - access_token

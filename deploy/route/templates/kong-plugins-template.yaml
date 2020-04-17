@@ -41,7 +41,7 @@ objects:
   plugin: cors
 
 
-# plugin only for debug
+# plugin only for trace, file /tmp/kong-trace.log
 - apiVersion: configuration.konghq.com/v1
   kind: KongPlugin
   metadata:
@@ -53,6 +53,20 @@ objects:
   config:
     path: /tmp/kong-trace.log
   plugin: file-log
+
+
+# plugin only for trace, kong log
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-debug
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
+  config:
+    writing_log_level: info
+  plugin: asseco-debug
 
 
 - apiVersion: configuration.konghq.com/v1
@@ -70,6 +84,19 @@ objects:
     policy: local
     hide_client_headers: true
   plugin: rate-limiting
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-jwt-cloner
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
+  config:
+    cloning_field: access_token
+  plugin: asseco-jwt-cloner
 
 
 parameters:
