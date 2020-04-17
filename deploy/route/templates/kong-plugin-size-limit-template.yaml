@@ -11,9 +11,7 @@ metadata:
   name: kong-plugin-size-limit
 objects:
 
-# Kong odpowiada HTTP 413 lub HTTP 417 w przypadku przekroczenia limitu.
-# Plik JPG w rozmiarze 177KB ma content-length=76834
-
+# Plugin odpowiada HTTP 413 lub HTTP 417 w przypadku przekroczenia limitu.
 - apiVersion: configuration.konghq.com/v1
   kind: KongPlugin
   metadata:

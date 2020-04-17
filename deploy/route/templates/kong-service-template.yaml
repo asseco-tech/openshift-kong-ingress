@@ -11,16 +11,32 @@ metadata:
   name: kong-service-template
 objects:
 
+- apiVersion: configuration.konghq.com/v1
+  kind: KongIngress
+  metadata:
+    name: upstream-service-${service_name}
+    labels:
+      kong-route: ${route_name}
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  # Sticky LoadBalancer
+  upstream:
+    hash_on: header
+    hash_on_header: X-Correlation-ID
+
 - apiVersion: v1
   kind: Service
   metadata:
+    annotations:
+      configuration.konghq.com/protocol: ${service_protocol}
+      configuration.konghq.com: "upstream-service-${service_name}"
     name: ${service_name}
     labels:
       kong-route: ${route_name}
   spec:
     externalName: ${external_service_name}
     ports:
-      - name: http
+      - name: ${service_protocol}
         port: ${{service_port}}
         protocol: TCP
         targetPort: ${{service_port}}
@@ -42,4 +58,8 @@ parameters:
 - name: service_port
   displayName: Service Port
   value: "8080"
+  required: true
+- name: service_protocol
+  displayName: Service Protocol
+  value: "http"
   required: true

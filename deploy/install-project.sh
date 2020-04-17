@@ -2,6 +2,7 @@
 
 # Reading configuration
 . ../configure.env
+. ../deploy.env
 
 # active project variable
 project_name="${run_project_name}${environment}"
@@ -39,6 +40,5 @@ oc adm policy add-role-to-group system:image-puller system:serviceaccounts:${pro
             --namespace=${project_build} \
             --rolebinding-name=${project_name}:image-puller;
 
-echo "+ Installing ServiceAccount Policy"
+echo "+ Configuring ServiceAccount Policy"
 oc adm policy add-scc-to-user anyuid -z kong-serviceaccount -n ${project_name}
-oc adm policy add-scc-to-user anyuid -z default -n ${project_name}

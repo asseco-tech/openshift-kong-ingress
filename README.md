@@ -1,7 +1,19 @@
 # openshift-kong-ingress
-OpenShift Deployment for Kong API Gateway and Konga GUI.
+#### Version: 1.1.1
 
-Repository address: https://github.com/asseco-tech/openshift-kong-ingress/
+OpenShift Deployment Scripts for Kong API Gateway and Konga GUI.
+
+ - **openshift-kong-ingress** repository: https://github.com/asseco-tech/openshift-kong-ingress/  
+ - Kong repository: https://github.com/Kong/kong
+ - Konga repository: https://github.com/pantsel/konga
+
+## Compatiblity
+**openshift-kong-ingress** has tested with:
+ - OpenShift 3.11
+ - Kong 2.0.2
+ - Kong Controller 0.7.1
+ - Konga 0.14.7
+
 
 ## Content
 It is OpenShift edition of [Kong for Kubernetes](https://github.com/Kong/kubernetes-ingress-controller) scripts and 
@@ -12,13 +24,6 @@ Konga is nice GUI dashboard for Kong.
 OpenShift edition has added some permission resources and converted to OpenShift specific resources.
 
 
-## Compatiblity
-**openshift-kong-ingress** has tested with:
- - OpenShift 3.11
- - Kong 2.0.2
- - Kong Controller 0.7.1
- - Konga 0.14.7
-
  
 ## Automated Installing
 Configuration in:
@@ -26,16 +31,19 @@ Configuration in:
 configure.env
 ```
 Running scripts:
-```sh
-cd deploy
-    . install-admin.sh
+```bash
+cd build
     . install.sh
+cd deploy
+    . install-cluster.sh
+    . install-project.sh
+    . install-app.sh
 ```  
-Script `install-admin.sh` requires **cluster-admin** role.   
-Script `install.sh` requires only local project **admin** role.
+Scripts `install-cluster.sh` and  `install-project.sh` require **cluster-admin** role.   
+Script `install-app.sh` requires only local project **admin** role.
 
 ## Custom Installing
-You can use `*.yaml` templates (look at [deploy](deploy) folder) to install them
+You can use `*.yaml` templates (look at [templates](deploy/templates) folder) to install them
 by custom solution. You just have to keep order according to the table below:
 
 | Order | Template or script           | Required Role | Scope   |
@@ -53,7 +61,6 @@ Every template contains parameters with some documentation inside.
 ```
 project_name=<kong-project>
 oc adm policy add-scc-to-user anyuid -z kong-serviceaccount -n ${project_name}
-oc adm policy add-scc-to-user anyuid -z default -n ${project_name}
 ```
 
 ## License

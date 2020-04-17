@@ -2,6 +2,7 @@
 
 # Reading configuration
 . ../configure.env
+. ../deploy.env
 
 # active project variable
 project_name="${run_project_name}${environment}"
@@ -11,4 +12,5 @@ type oc > /dev/null 2>&1 || { echo >&2 "ERROR: oc program doesn't exist" && retu
 oc whoami > /dev/null 2>&1 || { echo >&2 "ERROR: You must login to OpenShift" && return 1; }
 
 # CHECK
-oc get ing,svc,ki,kp,KongCredential,KongConsumer -n ${project_name}
+oc get svc -l 'kong-route' -n ${project_name}
+oc get ing,ki,kp,KongCredential,KongConsumer -n ${project_name}

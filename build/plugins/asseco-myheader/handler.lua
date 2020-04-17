@@ -1,3 +1,4 @@
+-- Copyright (C) Asseco Poland SA
 local BasePlugin = require "kong.plugins.base_plugin"
 
 local HelloWorldHandler = BasePlugin:extend()
@@ -5,7 +6,7 @@ local HelloWorldHandler = BasePlugin:extend()
 HelloWorldHandler.PRIORITY = 2000
 
 function HelloWorldHandler:new()
-  HelloWorldHandler.super.new(self, "hello-world")
+  HelloWorldHandler.super.new(self, "asseco-myheader")
 end
 
 function HelloWorldHandler:access(conf)

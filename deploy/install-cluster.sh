@@ -2,6 +2,7 @@
 
 # Reading configuration
 . ../configure.env
+. ../deploy.env
 
 # Validating tools
 type oc > /dev/null 2>&1 || { echo >&2 "ERROR: oc program doesn't exist" && return 1; }

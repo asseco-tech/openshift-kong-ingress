@@ -45,7 +45,8 @@ objects:
 
           access_log off;
           location /health {
-            return 200;
+            default_type application/json;
+            return 200  '{"status": "run"}';
           }
       }
 
@@ -70,7 +71,6 @@ objects:
     selector:
       app: ingress-kong
     type: LoadBalancer
-
 
 
 - apiVersion: route.openshift.io/v1
@@ -133,9 +133,29 @@ objects:
     labels:
       app: ingress-kong
   spec:
-    replicas: 1
+    replicas: 2
     selector:
       deploymentconfig: ingress-kong
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - proxy
+        from:
+          kind: ImageStreamTag
+          name: "${KONG_IMAGE_NAME}:${KONG_IMAGE_TAG}"
+          namespace: "${IMAGE_NAMESPACE}"
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - ingress-controller
+        from:
+          kind: ImageStreamTag
+          name: "${KONG_CONTROLLER_IMAGE_NAME}:${KONG_CONTROLLER_IMAGE_TAG}"
+          namespace: "${IMAGE_NAMESPACE}"
     template:
       metadata:
         labels:
@@ -150,13 +170,25 @@ objects:
           - name: KONG_NGINX_DAEMON
             value: 'off'
           - name: KONG_NGINX_WORKER_PROCESSES
+            value: '1'
+          - name: KONG_ROUTER_CONSISTENCY
+            value: 'eventual'
+          - name: KONG_ROUTER_UPDATE_FREQUENCY
             value: '3'
+          - name: KONG_CLIENT_MAX_BODY_SIZE
+            value: '0'
           - name: KONG_PROXY_CACHE
             value: 'off'
+          - name: KONG_NGINX_PROXY_PROXY_BUFFER_SIZE
+            value: 128k
+          - name: KONG_NGINX_PROXY_PROXY_BUFFERS
+            value: 4 256k
+          - name: KONG_NGINX_PROXY_PROXY_BUSY_BUFFERS_SIZE
+            value: 256k
           - name: KONG_NGINX_HTTP_INCLUDE
             value: /kong/servers.conf
-          - name: KONG_ADMIN_ACCESS_LOG_
-            value: /dev/stdout
+          - name: KONG_ADMIN_ACCESS_LOG
+            value: 'off'
           - name: KONG_ADMIN_ERROR_LOG
             value: /dev/stderr
           - name: KONG_ADMIN_LISTEN
@@ -169,10 +201,12 @@ objects:
             value: /dev/stderr
           - name: KONG_PROXY_LISTEN
             value: 0.0.0.0:8000, 0.0.0.0:8443 ssl
-          - name: KONG_PLUGINS
-            value: 'bundled,myheader,jwt-transformer'
-          - name: KONG_LUA_PACKAGE_PATH
-            value: "/opt/?.lua;;"
+          - name: KONG_REAL_IP_HEADER
+            value: 'X-Forwarded-For'
+          - name: KONG_REAL_IP_RECURSIVE
+            value: 'on'
+          - name: KONG_TRUSTED_IPS
+            value: '0.0.0.0/0,::/0'
           image: ${KONG_IMAGE_NAME}:${KONG_IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           command:
@@ -187,16 +221,6 @@ objects:
                 - /bin/sh
                 - -c
                 - kong quit
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /health
-              port: 9001
-              scheme: HTTP
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
           ports:
           - containerPort: 8000
             name: proxy
@@ -213,14 +237,24 @@ objects:
           - containerPort: 9542
             name: metrics
             protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - 'sh'
+                - '-c'
+                - '/opt/kong/liveness_probe.sh 9001 /health 8000 /health'
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 2
+            timeoutSeconds: 1
           readinessProbe:
-            failureThreshold: 3
             httpGet:
               path: /health
               port: 9001
               scheme: HTTP
-            periodSeconds: 10
-            successThreshold: 1
+            initialDelaySeconds: 5
+            periodSeconds: 12
+            failureThreshold: 5
             timeoutSeconds: 1
           resources:
             requests:
@@ -231,8 +265,6 @@ objects:
           volumeMounts:
           - mountPath: /kong
             name: kong-server-blocks
-          - mountPath: /opt/kong/plugins/myheader
-            name: plugin-myheader
         - name: ingress-controller
           env:
           - name: POD_NAME
@@ -253,27 +285,28 @@ objects:
           - --admin-tls-skip-verify
           - --publish-service=${NAMESPACE}/kong-proxy
           - --ingress-class=${INGRESS_CLASS_ID}
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /healthz
-              port: 10254
-              scheme: HTTP
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
           ports:
           - containerPort: 8080
             name: webhook
             protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - 'sh'
+                - '-c'
+                - '/opt/kong/liveness_probe.sh 10254 /healthz 8000 /health'
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 2
+            timeoutSeconds: 1
           readinessProbe:
-            failureThreshold: 3
             httpGet:
               path: /healthz
               port: 10254
               scheme: HTTP
-            periodSeconds: 10
-            successThreshold: 1
+            initialDelaySeconds: 5
+            periodSeconds: 12
+            failureThreshold: 5
             timeoutSeconds: 1
           resources:
             requests:
@@ -290,9 +323,6 @@ objects:
         - name: kong-server-blocks
           configMap:
             name: kong-server-blocks
-        - name: plugin-myheader
-          configMap:
-            name: plugin-myheader
 
 parameters:
 - name: NAMESPACE
@@ -313,6 +343,10 @@ parameters:
   displayName: Kong Memory Limit (ingress container)
   description: Maximum amount of memory the kong container can use (ingress container)
   value: 200Mi
+- name: IMAGE_NAMESPACE
+  displayName: Kong Container Image Namespace
+  description: 'Namespace of the kong container image'
+  value: 'docker.io/kong'
 - name: KONG_IMAGE_NAME
   displayName: Kong Container Image Name
   description: 'Name of the kong container image to be used'

@@ -4,11 +4,18 @@
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source scripts/yaml.sh
 . ../../configure.env
+. ../../deploy.env
 
 # cli param
 param_mode=${1:-apply}
+param_config_yaml=${2:-kong-routes.yaml}
 if [[ ! "${param_mode}" =~ ^(apply|create|delete)$ ]]; then
-    echo "Usage: ./install.sh [apply|create|delete]"
+    echo "Usage: ./install.sh [apply|create|delete] [<file.yaml>]"
+    exit 1
+fi
+if [ ! -f ${param_config_yaml} ]; then
+    echo "Usage: ./install.sh [apply|create|delete] [<file.yaml>]"
+    echo >&2 "ERROR: file \"${param_config_yaml}\" doesn't exist"
     exit 1
 fi
 
@@ -18,7 +25,8 @@ type oc > /dev/null 2>&1 || { echo >&2 "ERROR: oc program doesn't exist" && exit
 oc whoami > /dev/null 2>&1 || { echo >&2 "ERROR: You must login to OpenShift" && exit 1; }
 
 # Execute parsing yaml
-create_variables ./kong-routes.yaml
+echo "+ Routes Config File: ${param_config_yaml}"
+create_variables ${param_config_yaml}
 
 # openshift project
 echo "+ Setting active project $route_project_name ..."
@@ -43,13 +51,28 @@ fi
 
 
 # Apply JWT plugin template
-if [ -f templates/kong-plugin-jwt-template.yaml ] && [ "${kong_jwt_provider_key_claim_name}" != "null" ] && [ "${kong_jwt_provider_key_claim_name}" != "" ]; then
+if [ -f templates/kong-plugin-jwt-template.yaml ] && [ "${jwt_key_claim_name}" != "null" ] && [ "${jwt_key_claim_value}" != "" ]; then
     echo "++ Applying JWT Plugin Template ..."
     oc process -f templates/kong-plugin-jwt-template.yaml \
       -p ingress_class="${kong_ingress_class}" \
-      -p key_claim_name="${kong_jwt_provider_key_claim_name}" \
-      -p key_claim_value="${kong_jwt_provider_key_claim_value}" \
-      -p rsa_public_key="${kong_jwt_provider_rsa_public_key}" \
+      -p key_claim_name="${jwt_key_claim_name}" \
+      -p key_claim_value="${jwt_key_claim_value}" \
+      -p rsa_public_key="${jwt_rsa_public_key}" \
+      -o yaml \
+      > yaml.tmp && \
+    cat yaml.tmp | oc $param_mode -f -
+    [ $? -ne 0 ] && [ "$param_mode" != "delete" ] && exit 1
+    rm -f *.tmp
+fi
+
+
+# Apply Basic-Auth plugin template
+if [ -f templates/kong-plugin-basicauth-template.yaml ] && [ "${basic_username}" != "" ]; then
+    echo "++ Applying Basic Auth Plugin Template ..."
+    oc process -f templates/kong-plugin-basicauth-template.yaml \
+      -p ingress_class="${kong_ingress_class}" \
+      -p username="${basic_username}" \
+      -p password="${basic_password}" \
       -o yaml \
       > yaml.tmp && \
     cat yaml.tmp | oc $param_mode -f -
@@ -66,10 +89,16 @@ do
 
     if [ "${kong_routes__external_service_name[i]}" != "null" ] && [ "${kong_routes__external_service_name[i]}" != "" ]; then
         echo "+ Applying External Service: ${kong_routes__external_service_name[i]}"
+        service_protocol="${kong_routes__service_protocol[i]:-http}"
+        if [ "${service_protocol}" == "null" ]; then
+            service_protocol="http"
+        fi
+
         oc process -f templates/kong-service-template.yaml \
           -p route_name="${kong_routes__name[i]}" \
           -p service_name="${kong_routes__service_name[i]}" \
           -p service_port=${kong_routes__service_port[i]} \
+          -p service_protocol="${service_protocol}" \
           -p external_service_name="${kong_routes__external_service_name[i]}" \
           -o yaml \
           > yaml.tmp && \
