@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  name: kong-plugin-jwt
+  annotations:
+    description: Plugins Template for Kong
+    tags: controller,kong,plugin
+    version: "1.0"
+objects:
+
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-common-cache
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+    labels:
+      kong-common: true
+  config:
+    strategy: memory
+    response_code: [200, 301, 302]
+    cache_ttl: 300
+    storage_ttl: 3600
+    content_type:
+    - "text/css"
+    - "image/png"
+    - "image/jpeg"
+    - "image/jpg"
+    - "image/gif"
+    - "application/javascript"
+    - "application/javascript; charset=UTF-8"
+    - "application/javascript;charset=UTF-8"
+    - "text/html"
+    - "text/html; charset=UTF-8"
+    - "text/html;charset=UTF-8"
+  plugin: proxy-cache
+
+
+# links
+# - https://docs.konghq.com/hub/kong-inc/proxy-cache/
+# - https://github.com/globocom/kong-plugin-proxy-cache
+
+parameters:
+- name: ingress_class
+  displayName: Ingress Class
+  value: "kong"
+  required: true
