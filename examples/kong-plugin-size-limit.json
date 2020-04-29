@@ -1,0 +1,14 @@
+- apiVersion: configuration.konghq.com/v1
+  kind: KongPlugin
+  metadata:
+    name: plugin-size-limit
+    labels:
+      kong-route: ${route_name}
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  config:
+    allowed_payload_size_text: ${{request_size}}
+    allowed_payload_size_binary: ${{request_size}}
+    allowed_headers_size: 5
+    payload_size_check: by-raw-content
+  plugin: asseco-request-size-limiting

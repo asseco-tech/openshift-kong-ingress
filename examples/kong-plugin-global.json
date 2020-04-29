@@ -1,0 +1,30 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: plugin-global-throttling
+  labels:
+    kong-common: "true"
+    global: "true"
+  annotations:
+    kubernetes.io/ingress.class: kong
+config:
+  second: 100
+  minute: 2000
+  limit_by: ip
+  policy: local
+  hide_client_headers: false
+plugin: rate-limiting
+
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: plugin-global-debug
+  annotations:
+    kubernetes.io/ingress.class: kong
+  labels:
+    kong-common: "true"
+    global: "true"
+config:
+   writing_log_level: info
+plugin: asseco-debug

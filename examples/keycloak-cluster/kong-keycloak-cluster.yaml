@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Template
+labels:
+  version: "1.0"
+  group: infrastructure
+metadata:
+  annotations:
+    description: Route Template for Kong Ingress
+    tags: controller,kong,route
+    version: "1.0"
+  name: kong-keycloak-cluster
+objects:
+
+- apiVersion: configuration.konghq.com/v1
+  kind: KongIngress
+  metadata:
+    name: upstream-service-${service_name}
+    labels:
+      kong-route: ${route_name}
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+  upstream:
+    hash_on: none
+    hash_on_cookie: 'GATEWAY_SESSION'
+    hash_fallback: none
+    healthchecks:
+      threshold: 25
+      active:
+        https_verify_certificate: false
+        type: ${service_protocol}
+        concurrency: 10
+        healthy:
+          http_statuses:
+          - 200
+          - 201
+          - 302
+          interval: 30
+          successes: 1
+        http_path: "/auth/realms/${keycloak_realm}/"
+        timeout: 1
+        unhealthy:
+          http_failures: 1
+          interval: 10
+          tcp_failures: 1
+          timeouts: 1
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      configuration.konghq.com/protocol: ${service_protocol}
+      configuration.konghq.com: "upstream-service-${service_name}"
+    name: ${service_name}
+    labels:
+      kong-route: ${route_name}
+  spec:
+    ports:
+      - name: ${service_protocol}
+        port: ${{service_port}}
+        protocol: TCP
+        targetPort: ${{service_port}}
+  status:
+    loadBalancer: {}
+
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    name: ${service_name}
+    labels:
+      kong-route: ${route_name}
+  subsets:
+    - addresses:
+        - ip: ${keycloak_host1}
+        - ip: ${keycloak_host2}
+        - ip: ${keycloak_host3}
+      ports:
+        - name: ${service_protocol}
+          port: ${{service_port}}
+          protocol: TCP
+
+
+parameters:
+- name: ingress_class
+  displayName: Ingress Class
+  value: "kong"
+  required: true
+- name: route_name
+  displayName: Route Name
+  required: true
+- name: service_name
+  displayName: Service Name
+  required: true
+- name: service_port
+  displayName: Service Port
+  value: "8080"
+  required: true
+- name: service_protocol
+  displayName: Service Protocol
+  value: "http"
+  required: true
+- name: keycloak_realm
+  displayName: keycloak_realm
+  required: true
+- name: keycloak_host1
+  displayName: keycloak_host1
+  required: true
+- name: keycloak_host2
+  displayName: keycloak_host2
+  required: false
+- name: keycloak_host3
+  displayName: keycloak_host3
+  required: false

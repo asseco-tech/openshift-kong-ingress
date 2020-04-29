@@ -1,0 +1,14 @@
+# Workaround for settings 'x-forwarded-proto' and 'x-forwarded-port' inside upstream
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: plugin-common-fixed-forward
+  annotations:
+    kubernetes.io/ingress.class: ${ingress_class}
+  labels:
+    kong-common: "true"
+config:
+  functions:
+    - ngx.var.upstream_x_forwarded_proto = kong.request.get_header("x-forwarded-proto") or ""
+    - ngx.var.upstream_x_forwarded_port = kong.request.get_header("x-forwarded-port") or ""
+plugin: post-function
