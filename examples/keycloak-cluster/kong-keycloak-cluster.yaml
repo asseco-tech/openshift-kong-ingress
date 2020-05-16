@@ -20,7 +20,7 @@ objects:
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
   upstream:
-    hash_on: none
+    hash_on: cookie
     hash_on_cookie: 'GATEWAY_SESSION'
     hash_fallback: none
     healthchecks:
